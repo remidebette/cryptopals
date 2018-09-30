@@ -1,6 +1,8 @@
+# coding: utf8
+
 import pytest
 
-from set1 import challenge1, challenge2
+from set1 import challenge1, finished_key_xor, challenge3, repeating_key_xor
 
 
 def test_challenge1():
@@ -22,5 +24,21 @@ def test_challenge2(in1, in2, expected):
     by2 = bytes.fromhex(in2)
     expected = bytes.fromhex(expected)
 
-    assert expected == challenge2(by1, by2)
+    assert expected == finished_key_xor(by1, by2)
 
+
+def test_challenge3():
+    given = bytes.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+    acceptable_keys = challenge3(given)
+    assert acceptable_keys
+
+
+def test_challenge5():
+    given = b"""Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal"""
+    key = b"ICE"
+
+    expected = bytes.fromhex("0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272"
+                             "a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
+
+    assert expected == repeating_key_xor(given, key)
