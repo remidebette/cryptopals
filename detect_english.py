@@ -1,5 +1,8 @@
+# encoding: utf8
+
 import os
 import string
+from collections import Counter
 from typing import Set
 
 
@@ -13,6 +16,9 @@ def load_dictionary() -> Set[bytes]:
 ENGLISH_WORDS = load_dictionary()
 acceptable_letters = (string.ascii_letters + string.whitespace).encode(encoding='ascii')
 acceptable_set = {letter for letter in acceptable_letters}
+
+english_score = b"etaonrishd .,\nlfcmugypwbvkjxqz-_!?'\"/1234567890*"
+score_list = [letter for letter in english_score]
 
 
 def get_english_count(message: bytes) -> float:
@@ -41,7 +47,23 @@ def remove_non_letters(message: bytes) -> bytes:
     return bytes(letters_only)
 
 
-# coding: utf8
+def score_english(message: bytes):
+    # msg = message.lower()
+    # stats = Counter(filter(lambda c: c in score_list, message))
+    score = 0
+
+    for c in message:
+        try:
+            where = score_list.index(c)
+            # score += (len(english) - where) * 2
+            score += len(score_list) - where
+        except ValueError:
+            # continue
+            score -= len(score_list)
+
+    # return score, stats
+    return score / len(message)  # , stats
+
 
 def is_english(message: bytes, word_percentage=20, letter_percentage=85) -> bool:
     # By default, 20% of the words must exist in the dictionary file, and

@@ -2,7 +2,8 @@
 
 import pytest
 
-from set1 import challenge1, finished_key_xor, challenge3, repeating_key_xor
+from set1 import challenge1, plain_key_xor, find_single_char_xor, repeating_key_xor, hamming_distance, \
+    find_single_char_xor_score
 
 
 def test_challenge1():
@@ -24,13 +25,19 @@ def test_challenge2(in1, in2, expected):
     by2 = bytes.fromhex(in2)
     expected = bytes.fromhex(expected)
 
-    assert expected == finished_key_xor(by1, by2)
+    assert expected == plain_key_xor(by1, by2)
 
 
 def test_challenge3():
     given = bytes.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
-    acceptable_keys = challenge3(given)
+    acceptable_keys = find_single_char_xor(given)
     assert acceptable_keys
+
+
+def test_challenge3_scored():
+    given = bytes.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+    acceptable_key = find_single_char_xor_score(given)
+    assert acceptable_key == b"X"
 
 
 def test_challenge5():
@@ -42,3 +49,10 @@ I go crazy when I hear a cymbal"""
                              "a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
 
     assert expected == repeating_key_xor(given, key)
+
+
+def test_hamming():
+    given = b"this is a test", b"wokka wokka!!!"
+    expected = 37
+
+    assert expected == hamming_distance(*given)
