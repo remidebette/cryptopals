@@ -1,6 +1,7 @@
 # encoding: utf8
 
 import base64
+import itertools
 import operator
 import os
 from statistics import mean
@@ -53,7 +54,7 @@ def repeating_key_xor(message: bytes, key: bytes):
 def find_single_char_xor(byt: bytes) -> List[bytes]:
     matching_keys = []
 
-    for i in range(1, 127):
+    for i in range(0, 256):
         key = int_to_byte(i)
         deciphered_byt = repeating_key_xor(byt, key)
         if is_english(deciphered_byt):
@@ -62,47 +63,43 @@ def find_single_char_xor(byt: bytes) -> List[bytes]:
     return matching_keys
 
 
-def find_single_char_xor_score(byt: bytes, fail_threshold=9.0) -> bytes:
+def find_single_char_xor_score(byt: bytes, fail_threshold=0.0) -> bytes:
     scored_keys = []
 
-    for i in range(1, 127):
+    for i in range(0, 256):
         key = int_to_byte(i)
         deciphered_byt = repeating_key_xor(byt, key)
         score = score_english(deciphered_byt)
         scored_keys.append((key, score))
 
-    scored_keys = sorted(scored_keys, key=operator.itemgetter(1), reverse=True)
+    final_key, final_score = max(scored_keys, key=operator.itemgetter(1))
 
-    if scored_keys[0][1] <= fail_threshold:
+    if final_score <= fail_threshold:
         return b''
 
-    return scored_keys[0][0]
+    return final_key
 
 
 def hamming_distance(key1: bytes, key2: bytes) -> int:
-    xor = plain_key_xor(key1, key2)
-    xor_int = int.from_bytes(xor, byteorder='big')
+    # xor = plain_key_xor(key1, key2)
+    # xor_int = int.from_bytes(xor, byteorder='big')
+    #
+    # return sum_digits(xor_int, base=2)
+    return sum([bin(key1[i] ^ key2[i]).count('1') for i in range(len(key1))])
 
-    return sum_digits(xor_int, base=2)
+
+def edit_distance(message: bytes, key_size: int):
+    first_blocks = [
+        message[n * key_size:(n + 1) * key_size]
+        for n in range(4)
+    ]
+
+    normalized_hammings = [hamming_distance(i, j) for i, j in itertools.combinations(first_blocks, 2)]
+    return mean(normalized_hammings) / key_size
 
 
 def challenge6(message: bytes):
-    key_size_distances = []
-    for key_size in range(3, 40):
-        first_blocks = [
-            message[n * key_size:(n + 1) * key_size]
-            for n in range(4)
-        ]
-
-        normalized_hammings = hamming_distance(first_blocks[0], first_blocks[1]) / key_size, hamming_distance(
-            first_blocks[1], first_blocks[2]) / key_size
-        means = mean(normalized_hammings)
-
-        key_size_distances.append((key_size, means))
-
-    key_size_distances = sorted(key_size_distances, key=operator.itemgetter(1))
-
-    selected_size = key_size_distances[0][0]
+    selected_size = min(range(2, 41), key=lambda k: edit_distance(message, k))
 
     substrings = [bytearray() for _ in range(selected_size)]
     for element, index in zip(message, cycle(range(selected_size))):
